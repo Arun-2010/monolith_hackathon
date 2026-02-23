@@ -1,55 +1,145 @@
-import { motion } from 'framer-motion';
+import React, { useMemo } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 
-interface RadarWidgetProps {
-  tokenCount?: number;
-  size?: number;
-}
+import { COLORS } from "../../utils/theme";
 
-export default function RadarWidget({ tokenCount = 0, size = 100 }: RadarWidgetProps) {
+export default function RadarWidget({ tokenCount = 0, size = 96 }: { tokenCount?: number; size?: number }) {
+  const rot = useSharedValue(0);
+
+  React.useEffect(() => {
+    rot.value = withRepeat(withTiming(1, { duration: 2400, easing: Easing.linear }), -1, false);
+  }, [rot]);
+
+  const sweepStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rot.value * 360}deg` }],
+  }));
+
+  const dots = useMemo(
+    () =>
+      Array.from({ length: Math.min(tokenCount, 5) }).map(() => ({
+        x: 0.2 + Math.random() * 0.6,
+        y: 0.2 + Math.random() * 0.6,
+      })),
+    [tokenCount]
+  );
+
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      {/* Radar circles */}
-      <div className="absolute inset-0 rounded-full border border-neon-green/20" />
-      <div className="absolute inset-[15%] rounded-full border border-neon-green/15" />
-      <div className="absolute inset-[30%] rounded-full border border-neon-green/10" />
-      
-      {/* Crosshairs */}
-      <div className="absolute top-0 bottom-0 left-1/2 w-px bg-neon-green/10" />
-      <div className="absolute left-0 right-0 top-1/2 h-px bg-neon-green/10" />
-      
-      {/* Sweep */}
-      <motion.div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: 'conic-gradient(from 0deg, transparent 0deg, hsl(var(--neon-green) / 0.2) 30deg, transparent 60deg)',
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-      />
-      
-      {/* Token dots */}
-      {Array.from({ length: Math.min(tokenCount, 5) }).map((_, i) => (
-        <motion.div
+    <View style={[styles.wrap, { width: size, height: size, borderRadius: size / 2 }]}>
+      <View style={[styles.ring, { borderRadius: size / 2 }]} />
+      <View style={[styles.ring, styles.ring2, { borderRadius: size / 2 }]} />
+      <View style={[styles.ring, styles.ring3, { borderRadius: size / 2 }]} />
+
+      <View style={[styles.vLine, { height: size }]} />
+      <View style={[styles.hLine, { width: size }]} />
+
+      <Animated.View style={[styles.sweepWrap, sweepStyle]}>
+        <LinearGradient
+          colors={["rgba(0,255,163,0.0)", "rgba(0,255,163,0.22)"]}
+          start={{ x: 0.5, y: 1 }}
+          end={{ x: 0.5, y: 0 }}
+          style={[styles.sweep, { height: size / 2 }]}
+        />
+      </Animated.View>
+
+      {dots.map((d, i) => (
+        <View
           key={i}
-          className="absolute w-2 h-2 rounded-full bg-neon-green"
-          style={{
-            top: `${25 + Math.random() * 50}%`,
-            left: `${25 + Math.random() * 50}%`,
-            boxShadow: '0 0 6px hsl(var(--neon-green))',
-          }}
-          animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-          transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+          style={[
+            styles.dot,
+            {
+              left: d.x * size,
+              top: d.y * size,
+            },
+          ]}
         />
       ))}
-      
-      {/* Center dot */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary" 
-           style={{ boxShadow: '0 0 8px hsl(var(--neon-green))' }} />
-      
-      {/* Count */}
-      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
-        <span className="hud-text text-primary">{tokenCount} nearby</span>
-      </div>
-    </div>
+
+      <View style={styles.centerDot} />
+      <View style={styles.caption}>
+        <Text style={styles.captionText}>{tokenCount} nearby</Text>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    backgroundColor: "rgba(0,255,163,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(0,255,163,0.18)",
+    overflow: "hidden",
+  },
+  ring: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
+    borderColor: "rgba(0,255,163,0.18)",
+  },
+  ring2: {
+    top: "14%",
+    left: "14%",
+    right: "14%",
+    bottom: "14%",
+    borderColor: "rgba(0,255,163,0.13)",
+  },
+  ring3: {
+    top: "30%",
+    left: "30%",
+    right: "30%",
+    bottom: "30%",
+    borderColor: "rgba(0,255,163,0.10)",
+  },
+  vLine: {
+    position: "absolute",
+    width: 1,
+    left: "50%",
+    top: 0,
+    backgroundColor: "rgba(0,255,163,0.10)",
+  },
+  hLine: {
+    position: "absolute",
+    height: 1,
+    top: "50%",
+    left: 0,
+    backgroundColor: "rgba(0,255,163,0.10)",
+  },
+  sweepWrap: { position: "absolute", left: "50%", top: "50%" },
+  sweep: {
+    width: 2,
+    transform: [{ translateX: -1 }, { translateY: -1 }],
+    borderRadius: 2,
+    shadowColor: COLORS.neonGreen,
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  dot: {
+    position: "absolute",
+    width: 6,
+    height: 6,
+    borderRadius: 6,
+    backgroundColor: COLORS.neonGreen,
+    shadowColor: COLORS.neonGreen,
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  centerDot: {
+    position: "absolute",
+    left: "50%",
+    top: "50%",
+    width: 6,
+    height: 6,
+    borderRadius: 6,
+    marginLeft: -3,
+    marginTop: -3,
+    backgroundColor: COLORS.neonGreen,
+    shadowColor: COLORS.neonGreen,
+    shadowOpacity: 0.75,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  caption: { position: "absolute", left: 0, right: 0, bottom: -18, alignItems: "center" },
+  captionText: { color: COLORS.neonGreen, fontSize: 10, fontWeight: "900", letterSpacing: 1.2 },
+});

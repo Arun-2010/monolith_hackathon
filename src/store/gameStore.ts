@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 export interface CapturedToken {
   id: string;
@@ -22,6 +23,15 @@ export interface ScanResult {
 }
 
 interface GameState {
+  // Boot
+  booted: boolean;
+  boot: () => void;
+
+  // Auth
+  isAuthed: boolean;
+  signIn: (name: string) => void;
+  signOut: () => void;
+
   // User
   username: string;
   setUsername: (name: string) => void;
@@ -53,6 +63,16 @@ interface GameState {
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
+      booted: false,
+      boot: () => set({ booted: true }),
+
+      isAuthed: false,
+      signIn: (name) => {
+        set({ isAuthed: true, username: name?.trim() ? name.trim() : "CyberHunter" });
+        get().claimDailyLogin();
+      },
+      signOut: () => set({ isAuthed: false }),
+
       username: 'CyberHunter',
       setUsername: (name) => set({ username: name }),
       
@@ -103,6 +123,22 @@ export const useGameStore = create<GameState>()(
         return true;
       },
     }),
-    { name: 'scamhunter-store' }
+    {
+      name: "scamhunter-store",
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        isAuthed: state.isAuthed,
+        username: state.username,
+        xp: state.xp,
+        level: state.level,
+        capturedTokens: state.capturedTokens,
+        scanHistory: state.scanHistory,
+        totalScans: state.totalScans,
+        totalCaptures: state.totalCaptures,
+        accuracy: state.accuracy,
+        streak: state.streak,
+        lastLoginDate: state.lastLoginDate,
+      }),
+    }
   )
 );

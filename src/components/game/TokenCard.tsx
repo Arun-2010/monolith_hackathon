@@ -1,50 +1,75 @@
-import { motion } from 'framer-motion';
-import GlassCard from './GlassCard';
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-interface TokenCardProps {
+import GlassCard from "./GlassCard";
+import { categoryColor, COLORS } from "../../utils/theme";
+
+export default function TokenCard({
+  name,
+  symbol,
+  riskScore,
+  category,
+  hue = 160,
+  onPress,
+}: {
   name: string;
   symbol: string;
   riskScore?: number;
-  category?: 'SAFE' | 'SUSPICIOUS' | 'SCAM';
+  category?: "SAFE" | "SUSPICIOUS" | "SCAM";
   hue?: number;
-  onClick?: () => void;
-  compact?: boolean;
-}
-
-export default function TokenCard({ name, symbol, riskScore, category, hue = 160, onClick, compact }: TokenCardProps) {
-  const categoryColor = category === 'SAFE'
-    ? 'text-safe'
-    : category === 'SUSPICIOUS'
-    ? 'text-warning'
-    : category === 'SCAM'
-    ? 'text-danger'
-    : 'text-muted-foreground';
-
+  onPress?: () => void;
+}) {
+  const c = category ? categoryColor(category) : COLORS.textMuted;
   return (
-    <GlassCard glow={category === 'SAFE' ? 'green' : category === 'SCAM' ? 'none' : 'none'} onClick={onClick}>
-      <div className={`flex items-center gap-3 ${compact ? '' : 'py-1'}`}>
-        <motion.div
-          className="w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold text-sm shrink-0"
-          style={{
-            background: `linear-gradient(135deg, hsl(${hue} 80% 50% / 0.3), hsl(${hue} 80% 30% / 0.5))`,
-            border: `1px solid hsl(${hue} 80% 50% / 0.3)`,
-            color: `hsl(${hue} 80% 70%)`,
-          }}
-          whileHover={{ rotate: 10 }}
-        >
-          {symbol.substring(0, 2)}
-        </motion.div>
-        <div className="flex-1 min-w-0">
-          <p className="font-display text-sm font-semibold text-foreground truncate">{name}</p>
-          <p className="hud-text text-muted-foreground">${symbol}</p>
-        </div>
-        {riskScore !== undefined && (
-          <div className="text-right shrink-0">
-            <p className={`font-display font-bold text-lg ${categoryColor}`}>{riskScore}</p>
-            {category && <p className={`hud-text ${categoryColor}`}>{category}</p>}
-          </div>
-        )}
-      </div>
-    </GlassCard>
+    <Pressable onPress={onPress}>
+      <GlassCard glow={category === "SAFE" ? "green" : "none"}>
+        <View style={styles.row}>
+          <View
+            style={[
+              styles.coin,
+              {
+                borderColor: `hsla(${hue}, 80%, 55%, 0.35)`,
+                backgroundColor: `hsla(${hue}, 80%, 45%, 0.18)`,
+              },
+            ]}
+          >
+            <Text style={[styles.coinText, { color: `hsl(${hue} 80% 75%)` }]}>{symbol.slice(0, 2)}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.name} numberOfLines={1}>
+              {name}
+            </Text>
+            <Text style={styles.sym}>${symbol}</Text>
+          </View>
+          {typeof riskScore === "number" ? (
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={[styles.score, { color: c }]}>{riskScore}</Text>
+              {category ? <Text style={[styles.cat, { color: c }]}>{category}</Text> : null}
+            </View>
+          ) : null}
+        </View>
+      </GlassCard>
+    </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "center", gap: 12 },
+  coin: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "rgba(0,0,0,1)",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  coinText: { fontWeight: "900", letterSpacing: 1.2 },
+  name: { color: COLORS.text, fontSize: 14, fontWeight: "900" },
+  sym: { color: COLORS.textMuted, marginTop: 2, fontSize: 12, letterSpacing: 1.1 },
+  score: { fontSize: 18, fontWeight: "900" },
+  cat: { fontSize: 10, fontWeight: "900", letterSpacing: 1.8 },
+});

@@ -1,54 +1,81 @@
-import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
-interface NeonButtonProps {
-  children: ReactNode;
-  onClick?: () => void;
-  variant?: 'green' | 'purple' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
-  fullWidth?: boolean;
-  disabled?: boolean;
-  icon?: ReactNode;
-}
+import { COLORS } from "../../utils/theme";
 
-const variantStyles = {
-  green: 'border-neon-green/40 text-primary bg-primary/10 hover:bg-primary/20 shadow-[0_0_15px_-3px_hsl(var(--neon-green)/0.3)]',
-  purple: 'border-neon-purple/40 text-secondary bg-secondary/10 hover:bg-secondary/20 shadow-[0_0_15px_-3px_hsl(var(--neon-purple)/0.3)]',
-  danger: 'border-danger/40 text-danger bg-danger/10 hover:bg-danger/20 shadow-[0_0_15px_-3px_hsl(var(--danger)/0.3)]',
-};
-
-const sizeStyles = {
-  sm: 'px-4 py-2 text-sm',
-  md: 'px-6 py-3 text-base',
-  lg: 'px-8 py-4 text-lg',
-};
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function NeonButton({
-  children,
-  onClick,
-  variant = 'green',
-  size = 'md',
+  title,
+  onPress,
+  variant = "green",
   fullWidth,
   disabled,
-  icon,
-}: NeonButtonProps) {
+  left,
+}: {
+  title: string;
+  onPress?: () => void;
+  variant?: "green" | "purple" | "danger";
+  fullWidth?: boolean;
+  disabled?: boolean;
+  left?: React.ReactNode;
+}) {
+  const scale = useSharedValue(1);
+
+  const anim = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const c =
+    variant === "green" ? COLORS.neonGreen : variant === "purple" ? COLORS.electricPurple : COLORS.dangerRed;
+
   return (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={onClick}
+    <AnimatedPressable
       disabled={disabled}
-      className={`
-        relative font-display font-semibold tracking-wider uppercase rounded-xl border
-        transition-all duration-300 flex items-center justify-center gap-2
-        disabled:opacity-40 disabled:pointer-events-none
-        ${variantStyles[variant]}
-        ${sizeStyles[size]}
-        ${fullWidth ? 'w-full' : ''}
-      `}
+      onPress={onPress}
+      onPressIn={() => {
+        scale.value = withSpring(0.98, { damping: 18, stiffness: 260 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 18, stiffness: 260 });
+      }}
+      style={[
+        styles.btn,
+        fullWidth ? styles.full : null,
+        { borderColor: `${c}55`, backgroundColor: `${c}1A`, shadowColor: c },
+        disabled ? styles.disabled : null,
+        anim,
+      ]}
     >
-      {icon && <span className="text-lg">{icon}</span>}
-      {children}
-    </motion.button>
+      <View style={styles.row}>
+        {left ? <View style={styles.left}>{left}</View> : null}
+        <Text style={[styles.text, { color: c }]}>{title}</Text>
+      </View>
+    </AnimatedPressable>
   );
 }
+
+const styles = StyleSheet.create({
+  btn: {
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  full: { width: "100%" },
+  disabled: { opacity: 0.45 },
+  row: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  left: { marginRight: 2 },
+  text: {
+    fontSize: 14,
+    letterSpacing: 1.8,
+    fontWeight: "800",
+    textTransform: "uppercase",
+  },
+});

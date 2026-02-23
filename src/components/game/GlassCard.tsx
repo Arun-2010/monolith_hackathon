@@ -1,41 +1,60 @@
-import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
+import React from "react";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { BlurView } from "expo-blur";
 
-interface GlassCardProps {
-  children: ReactNode;
-  className?: string;
-  glow?: 'green' | 'purple' | 'none';
-  onClick?: () => void;
-  animate?: boolean;
-}
+import { COLORS } from "../../utils/theme";
 
 export default function GlassCard({
   children,
-  className = '',
-  glow = 'none',
-  onClick,
-  animate = true,
-}: GlassCardProps) {
-  const glowClass = glow === 'green' ? 'glass-card-glow' : glow === 'purple' ? 'glass-card neon-border-purple' : 'glass-card';
-
-  const Comp = animate ? motion.div : 'div';
-  const animProps = animate
-    ? {
-        initial: { opacity: 0, y: 10 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.4 },
-        whileHover: onClick ? { scale: 1.01 } : undefined,
-        whileTap: onClick ? { scale: 0.98 } : undefined,
-      }
-    : {};
+  style,
+  glow = "none",
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+  glow?: "green" | "purple" | "none";
+}) {
+  const glowStyle =
+    glow === "green"
+      ? styles.glowGreen
+      : glow === "purple"
+        ? styles.glowPurple
+        : null;
 
   return (
-    <Comp
-      {...(animProps as any)}
-      onClick={onClick}
-      className={`${glowClass} p-4 ${onClick ? 'cursor-pointer' : ''} ${className}`}
-    >
-      {children}
-    </Comp>
+    <View style={[styles.wrap, glowStyle, style]}>
+      <BlurView intensity={26} tint="dark" style={styles.blur}>
+        <View style={styles.inner}>{children}</View>
+      </BlurView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    backgroundColor: COLORS.glass,
+  },
+  blur: {
+    borderRadius: 20,
+  },
+  inner: {
+    padding: 16,
+  },
+  glowGreen: {
+    borderColor: "rgba(0,255,163,0.35)",
+    shadowColor: COLORS.neonGreen,
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  glowPurple: {
+    borderColor: "rgba(123,92,255,0.35)",
+    shadowColor: COLORS.electricPurple,
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
+});
