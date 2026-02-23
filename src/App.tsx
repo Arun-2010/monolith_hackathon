@@ -3,7 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import BottomTabBar from "@/components/game/BottomTabBar";
+import SplashScreen from "./pages/SplashScreen";
+import HomeScreen from "./pages/HomeScreen";
+import ScannerScreen from "./pages/ScannerScreen";
+import GameModeScreen from "./pages/GameModeScreen";
+import ARGameplayScreen from "./pages/ARGameplayScreen";
+import LeaderboardScreen from "./pages/LeaderboardScreen";
+import ProfileScreen from "./pages/ProfileScreen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -14,11 +21,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="dark">
+          <Routes>
+            <Route path="/splash" element={<SplashScreen />} />
+            <Route path="/" element={<HomeScreen />} />
+            <Route path="/scanner" element={<ScannerScreen />} />
+            <Route path="/game" element={<GameModeScreen />} />
+            <Route path="/ar" element={<ARGameplayScreen />} />
+            <Route path="/leaderboard" element={<LeaderboardScreen />} />
+            <Route path="/profile" element={<ProfileScreen />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <BottomTabBar />
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
